@@ -7,7 +7,7 @@ export default function Products({ auth }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  //  URL State Synchronization using useSearchParams Matrix
+  // 🚀 URL State Synchronization using useSearchParams Matrix
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Reading variables safely straight out of the URL string parameters
