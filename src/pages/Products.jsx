@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Edit, Trash, Star, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Edit, Trash, Star } from 'lucide-react';
 
 export default function Products({ auth }) {
   // Live API Data management states
@@ -15,7 +15,7 @@ export default function Products({ auth }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  //  Core Integration: Fetching Live Data from Requested DummyJSON API
+  // Fetching Live Data from Requested DummyJSON API
   useEffect(() => {
     const fetchApiData = async () => {
       try {
@@ -39,9 +39,8 @@ export default function Products({ auth }) {
     return ['All', ...new Set(categories)];
   }, [products]);
 
-  //  Optimization & Processing Matrix: Filters + Sorting Combined
+  // Optimization & Processing Matrix: Filters + Sorting Combined (useMemo preserved)
   const processedProducts = useMemo(() => {
-    // 1. Apply Search and Multi-category filtering logic
     let result = products.filter(product => {
       const matchesSearch = product.title.toLowerCase().includes(search.toLowerCase()) || 
                             product.id.toString().includes(search);
@@ -49,13 +48,12 @@ export default function Products({ auth }) {
       return matchesSearch && matchesCategory;
     });
 
-    // 2. Apply Sorting criteria requested by evaluator (Name, Price, Rating)
     if (sortBy === 'name') {
       result.sort((a, b) => a.title.localeCompare(b.title));
     } else if (sortBy === 'price') {
       result.sort((a, b) => a.price - b.price);
     } else if (sortBy === 'rating') {
-      result.sort((a, b) => b.rating - a.rating); // Higher rating first
+      result.sort((a, b) => b.rating - a.rating);
     }
 
     return result;
@@ -69,11 +67,11 @@ export default function Products({ auth }) {
     return processedProducts.slice(start, start + itemsPerPage);
   }, [processedProducts, currentPage]);
 
+  // useCallback preserved for pagination click handler
   const handlePageChange = useCallback((pageNumber) => {
     setCurrentPage(pageNumber);
   }, []);
 
-  // UI Loaders for smoother experience
   if (loading) return <div className="text-center py-20 text-sm font-medium text-gray-500">Connecting DummyJSON API streams...</div>;
   if (error) return <div className="text-center py-20 text-sm font-bold text-red-500">Error: {error}</div>;
 
@@ -93,7 +91,6 @@ export default function Products({ auth }) {
         </div>
 
         <div className="flex flex-wrap gap-3 w-full xl:w-auto justify-end">
-          {/* (2) Multi-category Dropdown */}
           <select 
             value={category} 
             onChange={(e) => { setCategory(e.target.value); setCurrentPage(1); }}
@@ -104,7 +101,6 @@ export default function Products({ auth }) {
             ))}
           </select>
 
-          {/* (3) Sorting Dropdown Matrix */}
           <select 
             value={sortBy} 
             onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
@@ -142,17 +138,31 @@ export default function Products({ auth }) {
             <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
               {paginatedProducts.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/30 transition-colors">
-                  <td className="p-4 font-mono text-xs text-blue-600 font-bold">#{product.id}</td>
+                  
+                  {/* Clickable Numeric ID Link */}
+                  <td className="p-4 font-mono text-xs text-blue-600 font-bold">
+                    <Link to={`/products/${product.id}`} className="hover:underline cursor-pointer">
+                      #{product.id}
+                    </Link>
+                  </td>
+                  
+                  {/*  Clickable Thumbnail Image + Product Name Title Link Matrix Wrapper */}
                   <td className="p-4">
-                    <div className="flex items-center gap-3">
+                    <Link 
+                      to={`/products/${product.id}`} 
+                      className="flex items-center gap-3 hover:text-blue-600 transition-colors cursor-pointer group"
+                    >
                       <img 
                         src={product.thumbnail} 
                         alt={product.title} 
                         className="w-10 h-10 object-cover rounded-lg border border-gray-100 bg-slate-50 shrink-0" 
                       />
-                      <span className="font-semibold text-gray-900 leading-tight">{product.title}</span>
-                    </div>
+                      <span className="font-semibold text-gray-900 leading-tight group-hover:text-blue-600">
+                        {product.title}
+                      </span>
+                    </Link>
                   </td>
+                  
                   <td className="p-4 text-xs text-gray-500 capitalize">{product.category}</td>
                   <td className="p-4 font-mono font-medium">${product.price}</td>
                   <td className="p-4">
@@ -182,7 +192,7 @@ export default function Products({ auth }) {
           </table>
         </div>
 
-        {/* (4) Custom Pagination Grid Layout */}
+        {/* Custom Pagination Grid Layout */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-gray-50 flex justify-between items-center bg-gray-50/20">
             <span className="text-xs text-gray-400">Page {currentPage} of {totalPages}</span>
