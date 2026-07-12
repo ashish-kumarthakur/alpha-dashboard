@@ -1,118 +1,110 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, Users, LogOut, Menu, X } from 'lucide-react';
+import React from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, ShoppingBag, Users, LogOut } from 'lucide-react';
 
-export default function Layout({ children, auth, setAuth }) {
-  const navigate = useNavigate();
+export default function Layout({ auth, onLogout }) {
   const location = useLocation();
-  
-  // Mobile Mobile Sidebar Toggle State Control Matrix
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  const handleLogout = () => {
-    setAuth({ isAuthenticated: false, role: null });
-    navigate('/login');
-  };
-
-  const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Products', path: '/products', icon: ShoppingBag },
-    { name: 'Users Matrix', path: '/users', icon: Users },
-  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex relative font-sans">
+    <div className="flex h-screen bg-slate-50/50 overflow-hidden font-sans antialiased text-slate-600">
       
-      {/* 1. Backdrop Layer Overlay for Mobile view close constraints */}
-      {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
-
-      {/* 2. Fully Responsive Sidebar (Desktop default, Mobile sliding out drawer layout) */}
-      <aside className={`fixed inset-y-0 left-0 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 z-50 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen lg:shrink-0 ${
-        isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-4">
-          <div className="flex items-center justify-between px-2 py-3 border-b border-slate-800 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-sm">
-                α
-              </div>
-              <span className="text-white font-bold tracking-wider text-base">Control Core</span>
+      {/* 🧭 Left Sidebar: Control Core Navigation Menu */}
+      <aside className="w-64 bg-[#0a1128] text-slate-300 border-r border-slate-800 flex flex-col justify-between p-4 shrink-0 hidden md:flex">
+        <div className="space-y-6">
+          
+          {/* Top Title Logo Block: Control Core */}
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="bg-blue-600 text-white w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center shadow-md shadow-blue-500/20 select-none">
+              α
             </div>
-            {/* Close Button Inside Drawer Matrix (Mobile Only) */}
-            <button 
-              onClick={() => setIsMobileOpen(false)} 
-              className="lg:hidden p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer"
-            >
-              <X size={18} />
-            </button>
+            <span className="text-base font-extrabold text-white tracking-wide">
+              Control Core
+            </span>
           </div>
 
-          {/* Navigation Links Mapping */}
+          {/* Navigation Links List */}
           <nav className="space-y-1">
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileOpen(false)} // Mobile auto close after jump
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-                    isActive
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
-                      : 'hover:bg-slate-800 hover:text-white'
-                  }`}
-                >
-                  <Icon size={18} />
-                  {item.name}
-                </Link>
-              );
-            })}
+            
+            {/* 1. Dashboard Link (Visible only if admin role) */}
+            {auth.role === 'admin' && (
+              <Link 
+                to="/dashboard" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                  location.pathname === '/dashboard' 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                    : 'hover:bg-slate-800/50 hover:text-white'
+                }`}
+              >
+                <LayoutDashboard size={18} />
+                <span>Dashboard</span>
+              </Link>
+            )}
+
+            {/* 2. Products Link */}
+            <Link 
+              to="/products" 
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                location.pathname.startsWith('/products') 
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                  : 'hover:bg-slate-800/50 hover:text-white'
+              }`}
+            >
+              <ShoppingBag size={18} />
+              <span>Products</span>
+            </Link>
+
+            {/* 3. Users Matrix Link (🔒 ONLY Visible for Admin) */}
+            {auth.role === 'admin' && (
+              <Link 
+                to="/users-matrix" 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
+                  location.pathname === '/users-matrix' 
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                    : 'hover:bg-slate-800/50 hover:text-white'
+                }`}
+              >
+                <Users size={18} />
+                <span>Users Matrix</span>
+              </Link>
+            )}
+
           </nav>
         </div>
 
-        {/* Bottom Session Control */}
-        <div className="p-4 border-t border-slate-800">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-red-400 hover:bg-red-950/30 hover:text-red-300 transition-all cursor-pointer"
+        {/* Bottom Profile Widget Area */}
+        <div className="p-3 bg-slate-900/50 rounded-xl border border-slate-800/60 flex items-center justify-between gap-2">
+          <div className="truncate">
+            <p className="text-xs font-bold text-white truncate capitalize">{auth.username || 'Operator'}</p>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">{auth.role}</p>
+          </div>
+          <button 
+            onClick={onLogout} 
+            className="p-1.5 text-slate-400 hover:text-red-400 rounded-lg cursor-pointer transition-colors"
+            title="Logout Session"
           >
-            <LogOut size={18} />
-            Terminate Session
+            <LogOut size={14} />
           </button>
         </div>
       </aside>
 
-      {/* 3. Main Page Render Body Adjusting to width limits */}
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-6 shadow-sm shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Mobile View Hamburger Trigger Button (Visible only under 1024px break line) */}
-            <button
-              onClick={() => setIsMobileOpen(true)}
-              className="lg:hidden p-2 -ml-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-            >
-              <Menu size={20} />
-            </button>
-            <div className="text-xs sm:text-sm font-semibold text-gray-700 truncate max-w-[180px] sm:max-w-none">
-              Welcome back, <span className="text-blue-600 font-bold capitalize">{auth.role}</span>!
-            </div>
+      {/* Main Content Viewer */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="h-14 bg-white border-b border-gray-100 px-6 flex items-center justify-between shadow-sm shrink-0">
+          <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Framework / <span className="text-gray-800 font-black">{location.pathname.substring(1) || 'Root'}</span>
           </div>
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center uppercase shadow-inner">
-            {auth.role?.charAt(0)}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center uppercase shadow-inner">
+              {auth.username ? auth.username.charAt(0) : 'A'}
+            </div>
           </div>
         </header>
 
-        {/* Outer Grid Scroll Scope */}
-        <div className="p-4 sm:p-6 flex-1 overflow-y-auto min-w-0">
-          {children}
-        </div>
-      </main>
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-50/60">
+          <Outlet />
+        </main>
+      </div>
+
     </div>
   );
 }

@@ -1,55 +1,74 @@
-import React, { useState, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import Login from './pages/Login';
 
-//  Optimization 1: Lazy Loading for Router Pages
-const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Products = lazy(() => import('./pages/Products'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
-const Users = lazy(() => import('./pages/Users'));
 
-// Simple dynamic loading fallback shell
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-full w-full py-20 text-sm font-semibold text-slate-500">
-    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></span>
-    Loading Module Core...
+// 👥 Inline Users Matrix Component view for Admin Panel
+const UsersMatrixView = () => (
+  <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+    <div className="border-b border-slate-100 pb-3">
+      <h2 className="text-lg font-black text-slate-800">Operational Users Access Matrix</h2>
+      <p className="text-xs text-slate-400 mt-0.5">Manage sub-nodes, security thresholds, and authentication privileges.</p>
+    </div>
+    <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm font-medium">
+      Users database connected. Live monitoring active.
+    </div>
   </div>
 );
 
 export default function App() {
-  const [auth, setAuth] = useState({ isAuthenticated: false, role: null });
+  const [auth, setAuth] = useState({
+    isAuthenticated: false,
+    role: null,
+    username: ''
+  });
+
+  const handleLogout = () => {
+    setAuth({ isAuthenticated: false, role: null, username: '' });
+  };
 
   return (
-    <Router>
-      {/* React Suspense layer required for Lazy bundles */}
-      <Suspense fallback={<PageLoader />}>
+    <BrowserRouter>
+      <Suspense fallback={<div className="p-8 text-sm text-gray-500 font-mono">Loading modules...</div>}>
         <Routes>
-          <Route path="/login" element={<Login auth={auth} setAuth={setAuth} />} />
           
-          <Route path="/" element={
-            auth.isAuthenticated ? <Layout auth={auth} setAuth={setAuth}><Navigate to="/dashboard" /></Layout> : <Navigate to="/login" />
-          } />
-          
-          <Route path="/dashboard" element={
-            auth.isAuthenticated ? <Layout auth={auth} setAuth={setAuth}><Dashboard auth={auth} /></Layout> : <Navigate to="/login" />
-          } />
-          
-          <Route path="/products" element={
-            auth.isAuthenticated ? <Layout auth={auth} setAuth={setAuth}><Products auth={auth} /></Layout> : <Navigate to="/login" />
-          } />
-          
-          <Route path="/products/:id" element={
-            auth.isAuthenticated ? <Layout auth={auth} setAuth={setAuth}><ProductDetail /></Layout> : <Navigate to="/login" />
-          } />
+          {/* Public Route */}
+          <Route 
+            path="/login" 
+            element={!auth.isAuthenticated ? <Login setAuth={setAuth} /> : <Navigate to={auth.role === 'admin' ? "/dashboard" : "/products"} replace />} 
+          />
 
-          <Route path="/users" element={
-            auth.isAuthenticated ? <Layout auth={auth} setAuth={setAuth}><Users auth={auth} /></Layout> : <Navigate to="/login" />
-          } />
+          {/* 🔒 Protected Routes Security Layout */}
+          <Route 
+            path="/" 
+            element={auth.isAuthenticated ? <Layout auth={auth} onLogout={handleLogout} /> : <Navigate to="/login" replace />}
+          >
+            <Route index element={<Navigate to={auth.role === 'admin' ? "/dashboard" : "/products"} replace />} />
 
-          <Route path="*" element={<Navigate to="/" />} />
+            {/* Admin only route */}
+            <Route 
+              path="dashboard" 
+              element={auth.role === 'admin' ? <Dashboard /> : <Navigate to="/products" replace />} 
+            />
+
+            {/* Shared routes */}
+            <Route path="products" element={<Products auth={auth} />} />
+            <Route path="products/:id" element={<ProductDetail auth={auth} />} />
+
+            {/* 🔑 Active route for Users Matrix (🔒 Secured for Admin only) */}
+            <Route 
+              path="users-matrix" 
+              element={auth.role === 'admin' ? <UsersMatrixView /> : <Navigate to="/products" replace />} 
+            />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-    </Router>
+    </BrowserRouter>
   );
 }
